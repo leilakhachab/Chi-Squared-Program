@@ -1,0 +1,45 @@
+
+probabilities <- c(
+  A = 0.0812, B = 0.0129, C = 0.0278, D = 0.0425, E = 0.1202,
+  F = 0.0223, G = 0.0202, H = 0.0609, I = 0.0697, J = 0.0015,
+  K = 0.0077, L = 0.0403, M = 0.0241, N = 0.0675, O = 0.0768,
+  P = 0.0193, Q = 0.0010, R = 0.0599, S = 0.0633, T = 0.0910,
+  U = 0.0276, V = 0.0098, W = 0.0236, X = 0.0015, Y = 0.0197, Z = 0.0007
+)
+
+ciphertext <- "Aopz pz tf lujyfwapvu zahaltlua. Sla'z zll pm aopz dvyrz"
+ciphertext_upper <- toupper(ciphertext) 
+#all the letters in order for substitution
+standard <- paste(LETTERS, collapse = "")
+chi_scores <- numeric(25)
+#the actual decrypted text
+candidates <- character(25)
+
+#only 25 possibilities for a caesar cipher
+for (key in 1:25) {
+  shifted <- paste(c(LETTERS[(26 - key + 1):26], LETTERS[1:(26 - key)]), collapse = "")
+  candidate_text <- chartr(standard, shifted, ciphertext_upper)
+  candidates[key] <- candidate_text
+  
+  #remove punctuation and spaces
+  cleaned_chars <- unlist(strsplit(candidate_text, ""))
+  cleaned_chars <- cleaned_chars[cleaned_chars %in% LETTERS]
+  
+  N <- length(cleaned_chars)
+  #make a table of the frequencies of each letter
+  O <- as.numeric(table(factor(cleaned_chars, levels = LETTERS)))
+  E <- N * probabilities
+  
+  chi_scores[key] <- sum(((O - E)^2) / E)
+}
+
+#lowest chi score = most likely to be plaintext
+#as the expected probability of our letters showing up most closely matches the actual frequency
+best_key <- which.min(chi_scores)
+decrypted_message <- chartr(standard, 
+                            paste(c(LETTERS[(26 - best_key + 1):26], LETTERS[1:(26 - best_key)]), collapse = ""), 
+                            ciphertext_upper)
+
+cat("Detected Key Shift:", best_key, "\n")
+cat("Decrypted Message: ", decrypted_message, "\n\n")
+
